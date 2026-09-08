@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { C, display, body, FONT_LINK, FURNACE, X_URL, OPENSEA } from "@/lib/theme";
+import { C, display, body, FONT_LINK, FURNACE, X_URL } from "@/lib/theme";
 import { useWallet, shorten } from "@/lib/wallet";
 import SparkField from "@/components/Sparks";
 import Embers from "@/components/Embers";
@@ -249,7 +249,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             fontSize: "0.95rem", color: C.muted, position: "relative",
           }}>
             <a href={X_URL} target="_blank" rel="noopener noreferrer">X</a>
-            <a href={OPENSEA} target="_blank" rel="noopener noreferrer">OpenSea</a>
           </div>
         </nav>
       )}
@@ -283,7 +282,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div>
               <p style={{ fontFamily: display, fontSize: "0.7rem", color: C.faint, margin: "0 0 12px", letterSpacing: "0.06em" }}>LINKS</p>
               <a href={X_URL} target="_blank" rel="noopener noreferrer" style={{ display: "block", fontSize: "0.92rem", color: C.muted, padding: "5px 0" }}>X</a>
-              <a href={OPENSEA} target="_blank" rel="noopener noreferrer" style={{ display: "block", fontSize: "0.92rem", color: C.muted, padding: "5px 0" }}>OpenSea</a>
             </div>
           </div>
         </div>
