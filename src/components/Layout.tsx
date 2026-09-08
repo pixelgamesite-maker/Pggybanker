@@ -3,6 +3,13 @@ import { Link, useLocation } from "wouter";
 import { C, display, body, FONT_LINK, FURNACE, X_URL, OPENSEA } from "@/lib/theme";
 import { useWallet, shorten } from "@/lib/wallet";
 import SparkField from "@/components/Sparks";
+import Embers from "@/components/Embers";
+
+/* A chamfered pixel-cut corner, the signature shape for the site's
+   solid buttons — the notches are what read as "game UI" rather
+   than a rounded default. */
+const notch = (cut: number) =>
+  `polygon(${cut}px 0, 100% 0, 100% calc(100% - ${cut}px), calc(100% - ${cut}px) 100%, 0 100%, 0 ${cut}px)`;
 
 /* ── A glowing seam: the structural rule for this site.
       Reads as a strip of molten metal rather than a hairline. ── */
@@ -90,30 +97,33 @@ const NAV: [string, string][] = [
 export function ConnectButton({ compact = false }: { compact?: boolean }) {
   const { address, connect, connecting, disconnect } = useWallet();
   const on = !!address;
+  const cut = compact ? 7 : 11;
   return (
     <button
       onClick={on ? disconnect : connect}
       title={on ? "Click to disconnect" : "Connect your wallet"}
       style={{
         fontFamily: display, fontWeight: 700,
-        fontSize: compact ? "0.66rem" : "0.8rem",
+        fontSize: compact ? "0.64rem" : "0.85rem",
+        letterSpacing: "0.03em",
         color: on ? C.flame : C.coal,
-        background: on ? "transparent" : C.ember,
-        border: `2px solid ${on ? C.ironUp : C.ember}`,
-        borderRadius: 4, padding: compact ? "9px 13px" : "14px 24px",
+        background: on ? C.iron : C.ember,
+        border: on ? `2px solid ${C.ironUp}` : "none",
+        clipPath: notch(cut),
+        padding: compact ? "12px 16px" : "17px 30px",
         cursor: "pointer", whiteSpace: "nowrap",
-        boxShadow: on ? "none" : `0 0 18px ${C.ember}44`,
-        transition: "background .16s, border-color .16s, color .16s",
+        boxShadow: on ? "none" : `0 0 22px ${C.ember}55`,
+        transition: "background .16s, border-color .16s, color .16s, box-shadow .16s",
       }}
       onMouseEnter={(e) => {
         const b = e.currentTarget;
-        if (on) b.style.borderColor = C.ember;
-        else b.style.background = C.flame;
+        if (on) { b.style.borderColor = C.ember; b.style.color = C.ember; }
+        else { b.style.background = C.flame; b.style.boxShadow = `0 0 30px ${C.flame}77`; }
       }}
       onMouseLeave={(e) => {
         const b = e.currentTarget;
-        if (on) b.style.borderColor = C.ironUp;
-        else b.style.background = C.ember;
+        if (on) { b.style.borderColor = C.ironUp; b.style.color = C.flame; }
+        else { b.style.background = C.ember; b.style.boxShadow = `0 0 22px ${C.ember}55`; }
       }}
     >
       {on ? shorten(address!, 5, 4) : connecting ? "CONNECTING" : "CONNECT WALLET"}
@@ -214,7 +224,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           paddingTop: 96, animation: "navIn .2s ease both",
           display: "flex", flexDirection: "column", justifyContent: "space-between",
         }}>
-          <ul style={{ listStyle: "none", margin: 0, padding: "0 clamp(20px,6vw,60px)" }}>
+          <Embers density={16} />
+          <ul style={{ listStyle: "none", margin: 0, padding: "0 clamp(20px,6vw,60px)", position: "relative" }}>
             {NAV.map(([label, href]) => {
               const active = loc === href;
               return (
@@ -235,7 +246,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </ul>
           <div style={{
             padding: "0 clamp(20px,6vw,60px) 40px", display: "flex", gap: 22,
-            fontSize: "0.95rem", color: C.muted,
+            fontSize: "0.95rem", color: C.muted, position: "relative",
           }}>
             <a href={X_URL} target="_blank" rel="noopener noreferrer">X</a>
             <a href={OPENSEA} target="_blank" rel="noopener noreferrer">OpenSea</a>
