@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Link } from "wouter";
 import Layout, { Section, Seam, Heading, Ember, ConnectButton } from "@/components/Layout";
 import Whitelist from "@/components/Whitelist";
+import Embers from "@/components/Embers";
 import { useHeat } from "@/components/Sparks";
-import { C, display, HERO_BG, FURNACE, OPENSEA } from "@/lib/theme";
+import { C, display, HERO_BG, FURNACE } from "@/lib/theme";
 
 export default function Home() {
   const [wl, setWl] = useState(false);
@@ -42,25 +43,21 @@ export default function Home() {
           transition: "background 90ms linear",
         }} />
 
+        {/* Slow drifting embers — always on, independent of clicks. */}
+        <Embers density={26} />
+
         <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 760 }}>
           <img src={FURNACE} alt="The Furnace" style={{
-            width: "min(300px, 62vw)", height: "auto", display: "block", margin: "0 auto",
-            filter: `drop-shadow(0 0 ${14 + heat * 46}px ${C.ember}${Math.round((0.5 + heat * 0.5) * 255).toString(16).padStart(2, "0")})`,
+            width: "min(340px, 68vw)", height: "auto", display: "block", margin: "0 auto",
+            transform: "translateX(7%)",
+            filter: `drop-shadow(0 0 ${16 + heat * 48}px ${C.ember}${Math.round((0.55 + heat * 0.45) * 255).toString(16).padStart(2, "0")}) contrast(1.12) saturate(1.1)`,
             transition: "filter 90ms linear",
           }} />
 
-          <p style={{
-            fontFamily: display, fontWeight: 400,
-            fontSize: "clamp(0.72rem,2.6vw,1rem)", letterSpacing: "0.34em",
-            color: C.flame, margin: "30px 0 10px", textIndent: "0.34em",
-          }}>
-            WELCOME TO
-          </p>
-
           <h1 style={{
             fontFamily: display, fontWeight: 700,
-            fontSize: "clamp(2.1rem,10vw,5.2rem)", lineHeight: 1,
-            letterSpacing: "0.02em", margin: "0 0 22px", color: C.cream,
+            fontSize: "clamp(2.4rem,11vw,5.6rem)", lineHeight: 1,
+            letterSpacing: "0.02em", margin: "36px 0 22px", color: C.cream,
             textShadow: `0 0 ${18 + heat * 40}px ${C.ember}${Math.round((0.35 + heat * 0.6) * 255).toString(16).padStart(2, "0")}`,
             transition: "text-shadow 90ms linear",
           }}>
@@ -77,7 +74,6 @@ export default function Home() {
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
             <Ember onClick={() => setWl(true)}>JOIN THE WHITELIST</Ember>
-            <Ember href={OPENSEA} tone="ghost">OPENSEA</Ember>
           </div>
 
           <p style={{
