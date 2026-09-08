@@ -8,7 +8,7 @@ const GROUPS: { group: string; items: [string, string][] }[] = [
     group: "THE BASICS",
     items: [
       ["What is The Furnace?", "A utility-based NFT collection. Each Furnace opens a wallet of its own, earns from the collection's trading fees, and carries whatever it holds with it when it changes hands."],
-      ["Where do I mint?", "OpenSea. The link is in the menu and on the home page."],
+      ["Where do I mint?", "OpenSea. We'll post the collection link on X when mint opens."],
       ["How do I get mint access?", "Through the whitelist. Four steps, one wallet, and it closes before mint opens."],
       ["What's the supply and price?", "Both are announced before the whitelist closes. Watch X — we post there first."],
     ],
