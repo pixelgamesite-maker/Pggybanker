@@ -126,7 +126,7 @@ export function ConnectButton({ compact = false }: { compact?: boolean }) {
         else { b.style.background = C.ember; b.style.boxShadow = `0 0 22px ${C.ember}55`; }
       }}
     >
-      {on ? shorten(address!, 5, 4) : connecting ? "CONNECTING" : "CONNECT WALLET"}
+      {on ? shorten(address!, 5, 4) : connecting ? "CONNECTING" : "CONNECT"}
     </button>
   );
 }
