@@ -1,6 +1,4 @@
 import { Router as WouterRouter, Route, Switch, Link } from "wouter";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
 
 import Home from "@/pages/home";
 import About from "@/pages/about";
@@ -38,17 +36,14 @@ function NotFound() {
 export default function App() {
   return (
     <div className="dark">
-      <TooltipProvider>
-        <WouterRouter>
-          <Switch>
-            <Route path="/" component={Home} />
-            <Route path="/about" component={About} />
-            <Route path="/faq" component={Faq} />
-            <Route component={NotFound} />
-          </Switch>
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
+      <WouterRouter>
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/about" component={About} />
+          <Route path="/faq" component={Faq} />
+          <Route component={NotFound} />
+        </Switch>
+      </WouterRouter>
     </div>
   );
 }
