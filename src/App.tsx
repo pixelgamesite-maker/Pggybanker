@@ -6,6 +6,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 
 import Home from "@/pages/home";
 import About from "@/pages/about";
+import Forge from "@/pages/forge";
 import Faq from "@/pages/faq";
 import { C, display, body } from "@/lib/theme";
 import { wagmiConfig } from "@/lib/wagmi";
@@ -60,6 +61,7 @@ export default function App() {
             <WouterRouter>
               <Switch>
                 <Route path="/" component={Home} />
+                <Route path="/forge" component={Forge} />
                 <Route path="/about" component={About} />
                 <Route path="/faq" component={Faq} />
                 <Route component={NotFound} />
