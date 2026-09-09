@@ -1,9 +1,27 @@
 import { Router as WouterRouter, Route, Switch, Link } from "wouter";
+import { WagmiProvider } from "wagmi";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { RainbowKitProvider, darkTheme } from "@rainbow-me/rainbowkit";
+import "@rainbow-me/rainbowkit/styles.css";
 
 import Home from "@/pages/home";
 import About from "@/pages/about";
 import Faq from "@/pages/faq";
 import { C, display, body } from "@/lib/theme";
+import { wagmiConfig } from "@/lib/wagmi";
+
+const queryClient = new QueryClient();
+
+/* RainbowKit's modal themed to the site's palette instead of its
+   default purple, so "connect a wallet" doesn't feel like a
+   different product bolted onto the page. */
+const furnaceTheme = darkTheme({
+  accentColor: C.ember,
+  accentColorForeground: C.coal,
+  borderRadius: "small",
+  fontStack: "system",
+  overlayBlur: "small",
+});
 
 function NotFound() {
   return (
@@ -35,15 +53,21 @@ function NotFound() {
 
 export default function App() {
   return (
-    <div className="dark">
-      <WouterRouter>
-        <Switch>
-          <Route path="/" component={Home} />
-          <Route path="/about" component={About} />
-          <Route path="/faq" component={Faq} />
-          <Route component={NotFound} />
-        </Switch>
-      </WouterRouter>
-    </div>
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider theme={furnaceTheme}>
+          <div className="dark">
+            <WouterRouter>
+              <Switch>
+                <Route path="/" component={Home} />
+                <Route path="/about" component={About} />
+                <Route path="/faq" component={Faq} />
+                <Route component={NotFound} />
+              </Switch>
+            </WouterRouter>
+          </div>
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }
