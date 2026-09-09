@@ -10,6 +10,7 @@ export type Application = {
   wallet: string;
   twitter: string;
   quote_url: string;
+  comment_url: string;
 };
 
 export async function submitApplication(row: Application) {
@@ -18,6 +19,7 @@ export async function submitApplication(row: Application) {
       wallet: row.wallet.trim().toLowerCase(),
       twitter: row.twitter.trim().replace(/^@/, ""),
       quote_url: row.quote_url.trim(),
+      comment_url: row.comment_url.trim(),
     },
   ]);
 }
