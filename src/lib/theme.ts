@@ -36,7 +36,7 @@ export const OPENSEA    = "https://opensea.io/";          // ← swap for the co
 
 /* ── Assets in /public ── */
 export const HERO_BG = "/hero-background.png";
-export const FURNACE = "/furnace.png";
+export const FURNACE = "/newfurnace.png";
 
 /* ── Supabase ── */
 export const TABLE = "furnace";
