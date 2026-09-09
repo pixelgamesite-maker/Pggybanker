@@ -90,6 +90,7 @@ export function Ember({
 
 const NAV: [string, string][] = [
   ["Home", "/"],
+  ["Forge", "/forge"],
   ["About", "/about"],
   ["FAQ", "/faq"],
 ];
