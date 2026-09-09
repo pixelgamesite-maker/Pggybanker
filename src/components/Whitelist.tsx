@@ -257,7 +257,7 @@ export default function Whitelist({ open, onClose }: { open: boolean; onClose: (
               )}
             </Step>
 
-            <Step n={4} title="TAG 3 FRIENDS" hint="Drop a comment on the pinned post tagging 3 friends. Paste the link to your comment below." done={s4} locked={!s3}>
+            <Step n={4} title="TAG 2 FRIENDS" hint="Drop a comment on the pinned post tagging 2 friends. Paste the link to your comment below." done={s4} locked={!s3}>
               {!s4 && (
                 <LinkStep
                   value={commentLink}
