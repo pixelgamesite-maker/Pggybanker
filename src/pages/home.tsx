@@ -49,7 +49,6 @@ export default function Home() {
         <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 760 }}>
           <img src={FURNACE} alt="The Furnace" style={{
             width: "min(340px, 68vw)", height: "auto", display: "block", margin: "0 auto",
-            transform: "translateX(7%)",
             filter: `drop-shadow(0 0 ${16 + heat * 48}px ${C.ember}${Math.round((0.55 + heat * 0.45) * 255).toString(16).padStart(2, "0")}) contrast(1.12) saturate(1.1)`,
             transition: "filter 90ms linear",
           }} />
