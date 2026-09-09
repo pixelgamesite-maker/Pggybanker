@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { C, display, body, X_URL, PINNED_URL } from "@/lib/theme";
 import { submitApplication } from "@/lib/supabase";
-import { useWallet, isValidEvm, shorten } from "@/lib/wallet";
+import { isValidEvm } from "@/lib/wallet";
 
 /* Stricter than a generic URL check — the pasted link has to actually
    point at x.com (or the old twitter.com domain), since a random link
@@ -114,8 +114,6 @@ function LinkStep({
 }
 
 export default function Whitelist({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { address, connect, connecting, hasWallet } = useWallet();
-
   const [handle, setHandle] = useState("");
   const [handleOk, setHandleOk] = useState(false);
   const [followed, setFollowed] = useState(false);
@@ -155,7 +153,7 @@ export default function Whitelist({ open, onClose }: { open: boolean; onClose: (
   const s2 = followed;
   const s3 = quoteOk && isXLink(quoteLink);
   const s4 = commentOk && isXLink(commentLink);
-  const s5 = !!address || (manualOk && isValidEvm(manual));
+  const s5 = manualOk && isValidEvm(manual);
   const all = s1 && s2 && s3 && s4 && s5;
 
   async function send() {
@@ -163,7 +161,7 @@ export default function Whitelist({ open, onClose }: { open: boolean; onClose: (
     if (already) { setErr("This browser has already sent an application."); return; }
     setErr(""); setSending(true);
     const { error } = await submitApplication({
-      wallet: address ?? manual, twitter: handle,
+      wallet: manual, twitter: handle,
       quote_url: quoteLink, comment_url: commentLink,
     });
     setSending(false);
@@ -257,7 +255,7 @@ export default function Whitelist({ open, onClose }: { open: boolean; onClose: (
               )}
             </Step>
 
-            <Step n={4} title="TAG 2 FRIENDS" hint="Drop a comment on the pinned post tagging 2 friends. Paste the link to your comment below." done={s4} locked={!s3}>
+            <Step n={4} title="TAG 3 FRIENDS" hint="Drop a comment on the pinned post tagging 3 friends. Paste the link to your comment below." done={s4} locked={!s3}>
               {!s4 && (
                 <LinkStep
                   value={commentLink}
@@ -271,27 +269,18 @@ export default function Whitelist({ open, onClose }: { open: boolean; onClose: (
               )}
             </Step>
 
-            <Step n={5} title="YOUR WALLET" hint="Connect it, or paste the address you'll mint with." done={s5} locked={!s4}>
-              {address ? (
-                <p style={{ fontFamily: display, fontSize: "0.85rem", color: C.flame, margin: 0 }}>
-                  {shorten(address, 10, 6)}
+            <Step n={5} title="YOUR WALLET" hint="Paste the address you'll mint with." done={s5} locked={!s4}>
+              <input value={manual} style={input} placeholder="0x…"
+                onChange={(e) => { setManual(e.target.value); setManualOk(false); }}
+                onKeyDown={(e) => e.key === "Enter" && isValidEvm(manual) && setManualOk(true)}
+                onFocus={(e) => (e.target.style.borderColor = C.ember)}
+                onBlur={(e) => (e.target.style.borderColor = C.iron)} />
+              {manual && !isValidEvm(manual) && (
+                <p style={{ fontSize: "0.82rem", color: C.ember, margin: "6px 0 0" }}>
+                  That isn't a valid address. It should be 42 characters starting with 0x.
                 </p>
-              ) : (
-                <>
-                  {hasWallet && <Small onClick={connect}>{connecting ? "CONNECTING…" : "CONNECT"}</Small>}
-                  <input value={manual} style={{ ...input, marginTop: 9 }} placeholder="0x…"
-                    onChange={(e) => { setManual(e.target.value); setManualOk(false); }}
-                    onKeyDown={(e) => e.key === "Enter" && isValidEvm(manual) && setManualOk(true)}
-                    onFocus={(e) => (e.target.style.borderColor = C.ember)}
-                    onBlur={(e) => (e.target.style.borderColor = C.iron)} />
-                  {manual && !isValidEvm(manual) && (
-                    <p style={{ fontSize: "0.82rem", color: C.ember, margin: "6px 0 0" }}>
-                      That isn't a valid address. It should be 42 characters starting with 0x.
-                    </p>
-                  )}
-                  {!s5 && isValidEvm(manual) && <Small onClick={() => setManualOk(true)}>SAVE ADDRESS</Small>}
-                </>
               )}
+              {!s5 && isValidEvm(manual) && <Small onClick={() => setManualOk(true)}>SAVE ADDRESS</Small>}
               <p style={{ fontSize: "0.8rem", color: C.faint, margin: "10px 0 0", lineHeight: 1.55 }}>
                 We only need your public address. Nobody from The Furnace will ever ask for a seed phrase.
               </p>
