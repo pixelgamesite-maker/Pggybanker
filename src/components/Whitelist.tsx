@@ -3,10 +3,15 @@ import { C, display, body, X_URL, PINNED_URL } from "@/lib/theme";
 import { submitApplication } from "@/lib/supabase";
 import { useWallet, isValidEvm, shorten } from "@/lib/wallet";
 
-function isUrl(u: string) {
+/* Stricter than a generic URL check — the pasted link has to actually
+   point at x.com (or the old twitter.com domain), since a random link
+   isn't proof of anything happening on X. */
+function isXLink(u: string) {
   try {
     const p = new URL(u.trim());
-    return p.protocol === "https:" || p.protocol === "http:";
+    if (p.protocol !== "https:" && p.protocol !== "http:") return false;
+    const host = p.hostname.replace(/^www\./, "").toLowerCase();
+    return host === "x.com" || host === "twitter.com";
   } catch { return false; }
 }
 
@@ -20,20 +25,21 @@ const input: React.CSSProperties = {
 /* Progress reads as a heat gauge — it gets hotter, not longer. */
 function Gauge({ done }: { done: boolean[] }) {
   const n = done.filter(Boolean).length;
+  const total = done.length;
   return (
     <div>
       <div style={{ display: "flex", gap: 4, height: 14 }}>
         {done.map((d, i) => (
           <div key={i} style={{
             flex: 1,
-            background: d ? (i < 2 ? C.ember : C.flame) : C.iron,
-            boxShadow: d ? `0 0 12px ${i < 2 ? C.ember : C.flame}88` : "none",
+            background: d ? (i < Math.ceil(total / 2) ? C.ember : C.flame) : C.iron,
+            boxShadow: d ? `0 0 12px ${i < Math.ceil(total / 2) ? C.ember : C.flame}88` : "none",
             transition: "background .3s, box-shadow .3s",
           }} />
         ))}
       </div>
-      <p style={{ fontFamily: display, fontSize: "0.66rem", color: n === 4 ? C.flame : C.faint, margin: "9px 0 0", letterSpacing: "0.05em" }}>
-        {n === 4 ? "AT TEMPERATURE" : `HEAT ${n} / 4`}
+      <p style={{ fontFamily: display, fontSize: "0.66rem", color: n === total ? C.flame : C.faint, margin: "9px 0 0", letterSpacing: "0.05em" }}>
+        {n === total ? "AT TEMPERATURE" : `HEAT ${n} / ${total}`}
       </p>
     </div>
   );
@@ -81,14 +87,42 @@ function Small({ onClick, children }: { onClick: () => void; children: React.Rea
   );
 }
 
+/* A link box shared by the two submission steps — opens the post,
+   takes a pasted link, validates it's actually an x.com URL. */
+function LinkStep({
+  value, onChange, onSave, saved, placeholder, launchLabel, launchTo,
+}: {
+  value: string; onChange: (v: string) => void; onSave: () => void; saved: boolean;
+  placeholder: string; launchLabel: string; launchTo: string;
+}) {
+  return (
+    <>
+      <Small onClick={() => window.open(launchTo, "_blank", "noopener")}>{launchLabel}</Small>
+      <input value={value} style={{ ...input, marginTop: 9 }} placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && isXLink(value) && onSave()}
+        onFocus={(e) => (e.target.style.borderColor = C.ember)}
+        onBlur={(e) => (e.target.style.borderColor = C.iron)} />
+      {value && !isXLink(value) && (
+        <p style={{ fontSize: "0.82rem", color: C.ember, margin: "6px 0 0" }}>
+          Needs to be a real x.com link — paste the full URL from the address bar or the Share button.
+        </p>
+      )}
+      {isXLink(value) && !saved && <Small onClick={onSave}>SAVE LINK</Small>}
+    </>
+  );
+}
+
 export default function Whitelist({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { address, connect, connecting, hasWallet } = useWallet();
 
   const [handle, setHandle] = useState("");
   const [handleOk, setHandleOk] = useState(false);
   const [followed, setFollowed] = useState(false);
-  const [quote, setQuote] = useState("");
+  const [quoteLink, setQuoteLink] = useState("");
   const [quoteOk, setQuoteOk] = useState(false);
+  const [commentLink, setCommentLink] = useState("");
+  const [commentOk, setCommentOk] = useState(false);
   const [manual, setManual] = useState("");
   const [manualOk, setManualOk] = useState(false);
 
@@ -100,15 +134,16 @@ export default function Whitelist({ open, onClose }: { open: boolean; onClose: (
   useEffect(() => {
     try {
       const s = JSON.parse(localStorage.getItem("furnace_wl") ?? "{}");
-      setHandle(s.handle ?? ""); setQuote(s.quote ?? "");
-      setManual(s.manual ?? ""); setFollowed(!!s.followed);
+      setHandle(s.handle ?? ""); setQuoteLink(s.quoteLink ?? "");
+      setCommentLink(s.commentLink ?? ""); setManual(s.manual ?? "");
+      setFollowed(!!s.followed);
       if (localStorage.getItem("furnace_wl_sent") === "true") setAlready(true);
     } catch { /* first visit */ }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("furnace_wl", JSON.stringify({ handle, quote, manual, followed }));
-  }, [handle, quote, manual, followed]);
+    localStorage.setItem("furnace_wl", JSON.stringify({ handle, quoteLink, commentLink, manual, followed }));
+  }, [handle, quoteLink, commentLink, manual, followed]);
 
   useEffect(() => {
     const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -118,16 +153,18 @@ export default function Whitelist({ open, onClose }: { open: boolean; onClose: (
 
   const s1 = handleOk && handle.trim().length > 1;
   const s2 = followed;
-  const s3 = quoteOk && isUrl(quote);
-  const s4 = !!address || (manualOk && isValidEvm(manual));
-  const all = s1 && s2 && s3 && s4;
+  const s3 = quoteOk && isXLink(quoteLink);
+  const s4 = commentOk && isXLink(commentLink);
+  const s5 = !!address || (manualOk && isValidEvm(manual));
+  const all = s1 && s2 && s3 && s4 && s5;
 
   async function send() {
-    if (!all) { setErr("Finish all four steps first."); return; }
+    if (!all) { setErr("Finish all five steps first."); return; }
     if (already) { setErr("This browser has already sent an application."); return; }
     setErr(""); setSending(true);
     const { error } = await submitApplication({
-      wallet: address ?? manual, twitter: handle, quote_url: quote,
+      wallet: address ?? manual, twitter: handle,
+      quote_url: quoteLink, comment_url: commentLink,
     });
     setSending(false);
     if (error) {
@@ -183,10 +220,10 @@ export default function Whitelist({ open, onClose }: { open: boolean; onClose: (
               THE WHITELIST
             </h2>
             <p style={{ color: C.muted, fontSize: "0.92rem", lineHeight: 1.65, margin: "0 0 18px" }}>
-              Four steps to get the Furnace hot. Finish them and drop your wallet in.
+              Five steps to get the Furnace hot. Finish them and drop your wallet in.
             </p>
 
-            <div style={{ marginBottom: 18 }}><Gauge done={[s1, s2, s3, s4]} /></div>
+            <div style={{ marginBottom: 18 }}><Gauge done={[s1, s2, s3, s4, s5]} /></div>
 
             <Step n={1} title="YOUR X HANDLE" hint="So we can match your account to your wallet." done={s1} locked={false}>
               <input value={handle} style={input} placeholder="@yourhandle"
@@ -197,7 +234,7 @@ export default function Whitelist({ open, onClose }: { open: boolean; onClose: (
               {!s1 && handle.trim().length > 1 && <Small onClick={() => setHandleOk(true)}>SAVE HANDLE</Small>}
             </Step>
 
-            <Step n={2} title="FOLLOW AND LIKE" hint="Follow @thefurnacexyz and like the pinned post." done={s2} locked={!s1}>
+            <Step n={2} title="FOLLOW" hint="Follow @thefurnacexyz on X." done={s2} locked={!s1}>
               {!s2 && (
                 <Small onClick={() => {
                   window.open(X_URL, "_blank", "noopener");
@@ -206,33 +243,42 @@ export default function Whitelist({ open, onClose }: { open: boolean; onClose: (
               )}
             </Step>
 
-            <Step n={3} title="QUOTE THE PINNED POST" hint="Quote it with “The Furnace” and tag two friends, then paste the link." done={s3} locked={!s2}>
+            <Step n={3} title="LIKE & QUOTE" hint="Like the pinned post, then quote it with a bullish caption — tell people why you're excited. Paste your quote tweet link below." done={s3} locked={!s2}>
               {!s3 && (
-                <>
-                  <Small onClick={() => window.open(PINNED_URL, "_blank", "noopener")}>OPEN THE POST</Small>
-                  <input value={quote} style={{ ...input, marginTop: 9 }} placeholder="https://x.com/you/status/…"
-                    onChange={(e) => { setQuote(e.target.value); setQuoteOk(false); }}
-                    onKeyDown={(e) => e.key === "Enter" && isUrl(quote) && setQuoteOk(true)}
-                    onFocus={(e) => (e.target.style.borderColor = C.ember)}
-                    onBlur={(e) => (e.target.style.borderColor = C.iron)} />
-                  {quote && !isUrl(quote) && (
-                    <p style={{ fontSize: "0.82rem", color: C.ember, margin: "6px 0 0" }}>
-                      Paste the full link, starting with https://
-                    </p>
-                  )}
-                  {isUrl(quote) && <Small onClick={() => setQuoteOk(true)}>SAVE LINK</Small>}
-                </>
+                <LinkStep
+                  value={quoteLink}
+                  onChange={(v) => { setQuoteLink(v); setQuoteOk(false); }}
+                  onSave={() => setQuoteOk(true)}
+                  saved={s3}
+                  placeholder="https://x.com/you/status/…"
+                  launchLabel="OPEN THE POST"
+                  launchTo={PINNED_URL}
+                />
               )}
             </Step>
 
-            <Step n={4} title="YOUR WALLET" hint="Connect it, or paste the address you'll mint with." done={s4} locked={!s3}>
+            <Step n={4} title="TAG 3 FRIENDS" hint="Drop a comment on the pinned post tagging 3 friends. Paste the link to your comment below." done={s4} locked={!s3}>
+              {!s4 && (
+                <LinkStep
+                  value={commentLink}
+                  onChange={(v) => { setCommentLink(v); setCommentOk(false); }}
+                  onSave={() => setCommentOk(true)}
+                  saved={s4}
+                  placeholder="https://x.com/you/status/…"
+                  launchLabel="OPEN THE POST"
+                  launchTo={PINNED_URL}
+                />
+              )}
+            </Step>
+
+            <Step n={5} title="YOUR WALLET" hint="Connect it, or paste the address you'll mint with." done={s5} locked={!s4}>
               {address ? (
                 <p style={{ fontFamily: display, fontSize: "0.85rem", color: C.flame, margin: 0 }}>
                   {shorten(address, 10, 6)}
                 </p>
               ) : (
                 <>
-                  {hasWallet && <Small onClick={connect}>{connecting ? "CONNECTING…" : "CONNECT WALLET"}</Small>}
+                  {hasWallet && <Small onClick={connect}>{connecting ? "CONNECTING…" : "CONNECT"}</Small>}
                   <input value={manual} style={{ ...input, marginTop: 9 }} placeholder="0x…"
                     onChange={(e) => { setManual(e.target.value); setManualOk(false); }}
                     onKeyDown={(e) => e.key === "Enter" && isValidEvm(manual) && setManualOk(true)}
@@ -243,7 +289,7 @@ export default function Whitelist({ open, onClose }: { open: boolean; onClose: (
                       That isn't a valid address. It should be 42 characters starting with 0x.
                     </p>
                   )}
-                  {!s4 && isValidEvm(manual) && <Small onClick={() => setManualOk(true)}>SAVE ADDRESS</Small>}
+                  {!s5 && isValidEvm(manual) && <Small onClick={() => setManualOk(true)}>SAVE ADDRESS</Small>}
                 </>
               )}
               <p style={{ fontSize: "0.8rem", color: C.faint, margin: "10px 0 0", lineHeight: 1.55 }}>
@@ -264,7 +310,7 @@ export default function Whitelist({ open, onClose }: { open: boolean; onClose: (
               boxShadow: all ? `0 0 26px ${C.ember}55` : "none",
               transition: "background .2s, color .2s, border-color .2s, box-shadow .2s",
             }}>
-              {sending ? "SAVING…" : all ? "JOIN THE WHITELIST" : "FINISH ALL FOUR STEPS"}
+              {sending ? "SAVING…" : all ? "JOIN THE WHITELIST" : "FINISH ALL FIVE STEPS"}
             </button>
           </>
         )}
