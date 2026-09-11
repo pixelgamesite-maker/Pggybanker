@@ -31,7 +31,7 @@ export const body = "'Pixelify Sans', 'Courier New', monospace";
 export const CONTRACT = "0x93eac0fdff74d0d1c3e132e26473d755e495d1f7";
 export const CHAIN_ID = 1;
 export const X_URL      = "https://x.com/thefurnacexyz";
-export const PINNED_URL = "https://x.com/thefurnacexyz";  // ← swap for the pinned post
+export const PINNED_URL = "https://x.com/Thefurnacexyz/status/2098412920786853892";  // ← swap for the pinned post
 export const OPENSEA    = "https://opensea.io/";          // ← swap for the collection URL
 
 /* ── Assets in /public ── */
