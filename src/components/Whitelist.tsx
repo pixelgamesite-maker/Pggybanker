@@ -87,6 +87,46 @@ function Small({ onClick, children }: { onClick: () => void; children: React.Rea
   );
 }
 
+/* Purely cosmetic — the code comes from the wallet address itself, so it's
+   free to generate and always the same for the same wallet, but nothing
+   reads it back or tracks who shared what. Labeled as such in the UI so
+   nobody mistakes it for a real referral-rewards mechanic. */
+function ReferralBox({ wallet }: { wallet: string }) {
+  const [copied, setCopied] = useState(false);
+  const code = wallet.replace(/^0x/i, "").slice(0, 6).toUpperCase();
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://thefurnacexyz.xyz";
+  const link = `${origin}/?ref=${code}`;
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch { /* clipboard blocked — the input itself is still selectable */ }
+  }
+
+  return (
+    <div style={{ marginTop: 26, textAlign: "left" }}>
+      <p style={{ fontFamily: display, fontSize: "0.62rem", letterSpacing: "0.06em", color: C.faint, margin: "0 0 8px" }}>
+        YOUR LINK — JUST FOR FUN, DOESN'T TRACK ANYTHING
+      </p>
+      <div style={{ display: "flex", gap: 8 }}>
+        <input readOnly value={link} onFocus={(e) => e.target.select()} style={{
+          ...input, flex: 1, color: C.flame, fontFamily: display, fontSize: "0.76rem", cursor: "text",
+        }} />
+        <button onClick={copy} style={{
+          flexShrink: 0, fontFamily: display, fontWeight: 700, fontSize: "0.66rem",
+          color: copied ? C.coal : C.ember, background: copied ? C.flame : "transparent",
+          border: `2px solid ${copied ? C.flame : C.ember}`, borderRadius: 3,
+          padding: "0 16px", cursor: "pointer", transition: "background .15s, color .15s, border-color .15s",
+        }}>
+          {copied ? "COPIED" : "COPY"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* A link box shared by the two submission steps — opens the post,
    takes a pasted link, validates it's actually an x.com URL. */
 function LinkStep({
@@ -210,6 +250,7 @@ export default function Whitelist({ open, onClose }: { open: boolean; onClose: (
             <p style={{ color: C.muted, margin: 0, lineHeight: 1.7, fontSize: "0.95rem" }}>
               Your entry is recorded. Selected wallets are added before mint — watch X for the announcement.
             </p>
+            {isValidEvm(manual) && <ReferralBox wallet={manual} />}
             <div style={{ marginTop: 20 }}><Small onClick={onClose}>BACK TO THE SITE</Small></div>
           </div>
         ) : (
